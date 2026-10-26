@@ -1,0 +1,129 @@
+# Cerebro — shared memory for AI agents. Runs from zero, no paid accounts:
+# Postgres (source of truth) + Qdrant (vectors) + Ollama (local embeddings).
+# AWS Bedrock (Titan or Cohere) is an OPTIONAL embedding backend (see .env.example).
+name: cerebro
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-cerebro}
+      POSTGRES_USER: ${POSTGRES_USER:-cerebro}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+      - ./src/postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cerebro} -d ${POSTGRES_DB:-cerebro}"]
+      interval: 5s
+      retries: 20
+    restart: unless-stopped
+
+  qdrant:
+    image: qdrant/qdrant:v1.12.4
+    volumes:
+      - qdrant-data:/qdrant/storage
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c ':> /dev/tcp/127.0.0.1/6333'"]
+      interval: 5s
+      retries: 20
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    volumes:
+      - ollama-models:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 5s
+      retries: 30
+    restart: unless-stopped
+
+  # One-shot: downloads the embedding model once (cached in the ollama-models volume).
+  ollama-pull:
+    image: ollama/ollama:latest
+    depends_on:
+      ollama: { condition: service_healthy }
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: ["ollama", "pull", "${OLLAMA_MODEL:-embeddinggemma}"]
+    restart: "no"
+
+  gateway:
+    build:
+      context: ./src/gateway
+      additional_contexts:
+        common: ./src/common
+    env_file: .env
+    environment: &cerebro-env
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_PORT_INTERNAL: "5432"
+      QDRANT_URL: http://qdrant:6333
+      # Embeddings: the code defaults to local Ollama EmbeddingGemma (768, profile title200-window1400-mean-l2-v1).
+      # To use AWS Bedrock (Titan or Cohere) instead, set EMBEDDING_BACKEND=bedrock and friends in .env (see .env.example).
+      VAULT_ROOT: /vault
+    volumes:
+      - ${VAULT_DIR:-./examples/vault}:/vault/obsidian-vault
+    ports:
+      - "${GATEWAY_PUBLISH:-127.0.0.1:8765}:8000"
+    depends_on:
+      postgres: { condition: service_healthy }
+      qdrant: { condition: service_healthy }
+      ollama-pull: { condition: service_completed_successfully }
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
+      interval: 5s
+      retries: 30
+    restart: unless-stopped
+
+  # Same image, indexer mode: watches the vault folder and keeps Qdrant in sync.
+  indexer:
+    build:
+      context: ./src/gateway
+      additional_contexts:
+        common: ./src/common
+    env_file: .env
+    environment:
+      <<: *cerebro-env
+      RUN_MODE: indexer
+    volumes:
+      - ${VAULT_DIR:-./examples/vault}:/vault/obsidian-vault
+    depends_on:
+      gateway: { condition: service_healthy }
+    restart: unless-stopped
+
+  mcp:
+    build:
+      context: ./src/mcp
+      additional_contexts:
+        common: ./src/common
+    env_file: .env
+    environment:
+      GATEWAY_URL: http://gateway:8000
+    ports:
+      - "${MCP_PUBLISH:-127.0.0.1:8766}:8766"
+    depends_on:
+      gateway: { condition: service_healthy }
+    restart: unless-stopped
+
+  mcp-sse:
+    build:
+      context: ./src/mcp
+      additional_contexts:
+        common: ./src/common
+    env_file: .env
+    environment:
+      GATEWAY_URL: http://gateway:8000
+      MCP_TRANSPORT: sse
+      MCP_PORT: "8767"
+    ports:
+      - "${MCP_SSE_PUBLISH:-127.0.0.1:8767}:8767"
+    depends_on:
+      gateway: { condition: service_healthy }
+    restart: unless-stopped
+
+volumes:
+  pg-data:
+  qdrant-data:
+  ollama-models:

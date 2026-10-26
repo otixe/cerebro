@@ -1,0 +1,6 @@
+# Approved by Saruman (task 8ae2603a, b95c7a2fd1248e60).
+# Exactly two synthetic canaries in sanitize.py's __main__ CLI self-test block
+# (AST-verified lines387-482), not service credentials. No rule/path-wide exclusion.
+# Runtime sanitizer regexes remain fully scanned. Scan from repo root with source '.'.
+src/gateway/sanitize.py:jwt:427
+src/gateway/sanitize.py:generic-api-key:440

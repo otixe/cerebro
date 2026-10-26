@@ -1,0 +1,11 @@
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+psycopg[binary,pool]==3.2.3
+qdrant-client==1.12.1
+boto3==1.35.44
+pydantic==2.9.2
+python-dotenv==1.0.1
+watchdog==5.0.3
+httpx==0.27.2
+slowapi==0.1.9
+pyyaml==6.0.2

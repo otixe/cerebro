@@ -1,0 +1,20 @@
+FROM python:3.12-slim
+WORKDIR /app
+ENV TMPDIR=/var/tmp
+COPY constraints-runtime-baseline.txt .
+RUN pip install --no-cache-dir --constraint /app/constraints-runtime-baseline.txt "mcp[cli]==1.28.1" "psycopg[binary]==3.3.4" httpx && pip check \
+ && python -c "import importlib.metadata as m; expected={line.strip() for line in open('constraints-runtime-baseline.txt') if line.strip() and not line.startswith('#')}; actual={(d.metadata['Name'] or '')+'=='+d.version for d in m.distributions()}; assert expected==actual, 'runtime inventory drift'; print('runtime inventory matches baseline', len(actual))"
+COPY mcp_server.py .
+# src/common is a named additional_contexts entry in Compose, shared with gateway.
+COPY --from=common tasks_rbac.py bus_notify.py bus_legacy.py correspondencia_core.py correspondencia_notify.py approval_commands.py agent_config.py ./
+RUN python -c "import bus_notify as b; assert hasattr(b,'notify_assignment'); assert not hasattr(b,'LEADERS'); print('bus_notify OK')"
+RUN python -c "import tasks_rbac as t; assert 'executor' not in t.TASK_RBAC['task_review']; assert 'auditor' in t.TASK_RBAC['task_review']; print('tasks_rbac OK')"
+RUN python -c "import bus_legacy as g; assert g.STATUS==410 and g.publish_closed({}) and g.publish_closed({'BUS_LEGACY_PUBLISH':'invalid'}) and g.publish_open({'BUS_LEGACY_PUBLISH':'open'}); print('bus_legacy OK')"
+RUN python -c "import correspondencia_core as c; assert c.ROOT_HEX_LENGTH==16; assert all(callable(getattr(c,n)) for n in ('_registry','normalize_mailbox','individual_mailbox','_new_root','_insert_deliveries')); assert c.individual_mailbox({'name':'demo-user','team':None,'kind':'human','is_lead':False})=='@demo-user'; assert c.individual_mailbox({'name':'demo-worker','team':'demo','kind':'agent','is_lead':False})=='@demo/worker'; print('correspondencia_core OK')"
+RUN python -c "import io,logging,correspondencia_core as c; assert hasattr(c,'log'); buf=io.StringIO(); c.log.addHandler(logging.StreamHandler(buf)); ROWS=[{'name':'demo-user','team':None,'kind':'human','is_lead':False,'role':None},{'name':'invalid-demo-row','team':None,'kind':'agent','is_lead':False,'role':None},{'name':'demo','team':'demo','kind':'agent','is_lead':True,'role':None}]; Cur=type('Cur',(),{'execute':lambda s,*a,**k:None,'fetchall':lambda s:ROWS}); ind,teams,aliases=c._registry(Cur()); assert '@demo-user' in ind and '@demo/demo' in ind and len(ind)==2; assert aliases.get('@demo')=='@demo/demo'; assert 'SALTEADA' in buf.getvalue() and 'invalid-demo-row' in buf.getvalue(); print('registry malformed-row resilience OK')"
+RUN python -c "import correspondencia_notify as n; assert n.TIPO=='inform' and n.ABIERTO is False and n.PRIORITY_MAP=={'high':'urgente','medium':'medio','low':'bajo'} and n.PRIORIDAD_DEFAULT=='medio'; assert callable(n.notify_assignment_correspondencia) and callable(n.resolve_notify_mailbox); print('correspondencia_notify OK')"
+RUN python -c "import bus_notify as b; assert callable(b.notify_assignment) and callable(b.notify_assignment_bus); assert b.NOTIFY_DEFAULT=='correspondencia' and set(b.NOTIFY_MODES)=={'correspondencia','bus','both'}; assert b.notify_mode({})=='correspondencia' and b.notify_mode({'CORRESPONDENCIA_NOTIFY':'bus'})=='bus' and b.notify_mode({'CORRESPONDENCIA_NOTIFY':'both'})=='both' and b.notify_mode({'CORRESPONDENCIA_NOTIFY':'invalid'})=='correspondencia'; print('dispatcher OK')"
+RUN python -c "import inspect,bus_notify as b; assert 'INSERT INTO bus_messages' not in inspect.getsource(b.notify_assignment); assert 'INSERT INTO bus_messages' in inspect.getsource(b.notify_assignment_bus); print('legacy INSERT confinement OK')"
+RUN env -i PATH=/usr/local/bin:/usr/bin:/bin PYTHONPATH=/app python -c "import mcp_server; print('mcp_server import OK')"
+EXPOSE 8766
+CMD ["python", "mcp_server.py"]
