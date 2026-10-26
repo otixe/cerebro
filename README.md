@@ -96,7 +96,6 @@ All three are good projects. They solve different problems:
 | Beyond memory | CLI, HTTP, MCP, TUI | Graph and entity features | Task board with QA, correspondence, shared skills, retrieval evaluation |
 | Footprint | Minimal | Library: light; server: a stack | A few GB of RAM and disk |
 
-**Pick Engram** for zero-infrastructure memory for your own coding agent. **Pick Mem0** to embed memory in a product. **Pick Cerebro** when several agents must work as a team.
 
 ## License
 

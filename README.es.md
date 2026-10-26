@@ -96,7 +96,6 @@ Los tres son buenos proyectos. Resuelven problemas distintos:
 | Más allá de la memoria | CLI, HTTP, MCP y TUI | Grafo y entidades | Tablero con QA, correspondencia, skills compartidas y evaluación del retrieval |
 | Huella | Mínima | Librería: liviana; servidor: un stack | Algunos GB de RAM y disco |
 
-**Elegí Engram** para memoria sin infraestructura en tu propio agente de código. **Elegí Mem0** para meter memoria en un producto. **Elegí Cerebro** cuando varios agentes tienen que trabajar como equipo.
 
 ## Licencia
 
