@@ -1,0 +1,717 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* ---------- Backgrounds ---------- */
+  --bg: #08090a;
+  --panel: #0f1011;
+  --bg-panel: #0f1011;
+  --surface: #191a1b;
+  --surface-hover: #202123;
+  /* ---------- Text ---------- */
+  --fg: #f7f8f8;
+  --fg-muted: #d0d6e0;
+  --fg-subtle: #8a8f98;
+  --fg-faint: #62666d;
+  --text: #f7f8f8;
+  --text-2: #d0d6e0;
+  --text-3: #8a8f98;
+  --text-4: #62666d;
+  /* ---------- Accent (morado / púrpura) ---------- */
+  --accent: #a855f7;
+  --accent-strong: #9333ea;
+  --accent-soft: #c084fc;
+  --accent-bg: #7e22ce;
+  --accent-hover: #9333ea;
+  /* ---------- Light borders ---------- */
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.08);
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  /* ---------- Semantic ---------- */
+  --success: #10b981;
+  --warn: #ffbc33;
+  --danger: #ff6363;
+  /* ---------- Glow (morado, Zoey/Linear) ---------- */
+  --glow-rgb: 168, 85, 247;
+  --glow-sm: 0 0 8px rgba(168, 85, 247, 0.35);
+  --glow-md: 0 0 16px rgba(168, 85, 247, 0.28);
+  --glow-lg: 0 0 40px rgba(168, 85, 247, 0.22);
+
+  /* Marcador de build del pulido premium de vistas de trabajo (Lurtz).
+     Se declara como string en custom property para sobrevivir a la
+     minificacion CSS, que elimina los comentarios en el build. */
+  --sinapsis-views-polish-v1: 'SINAPSIS_VIEWS_POLISH_V1';
+  --sinapsis-views-polish-v2: 'SINAPSIS_VIEWS_POLISH_V2';
+
+  color-scheme: dark;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-feature-settings: 'cv01', 'cv02', 'ss03';
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ---------- Tema claro cálido (Notion-style), toggle ⌘⇧L ---------- */
+html.light {
+  --bg: #fbfbfa;
+  --panel: #f4f3f1;
+  --bg-panel: #f4f3f1;
+  --surface: #efeeec;
+  --surface-hover: #e6e4e0;
+  --fg: #1f2023;
+  --fg-muted: #37383c;
+  --fg-subtle: #6b6f76;
+  --fg-faint: #9aa0a6;
+  --text: #1f2023;
+  --text-2: #37383c;
+  --text-3: #6b6f76;
+  --text-4: #9aa0a6;
+  --accent: #9333ea;
+  --accent-bg: #7e22ce;
+  --accent-hover: #a855f7;
+  /* Particulas (ParticlesBackground.tsx): en claro la particula base debe ser
+     oscura (no violeta claro) para contrastar sobre --bg claro; lineas y halo
+     siguen leyendo --accent (ya oscuro arriba). Variable exclusiva de
+     particulas: no se usa en ningun otro componente (grep verificado). */
+  --accent-soft: #37383c;
+  --border: rgba(0, 0, 0, 0.1);
+  --border-strong: rgba(0, 0, 0, 0.1);
+  --border-subtle: rgba(0, 0, 0, 0.06);
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--fg);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Scrollbar sutil, Linear-like */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.14);
+  background-clip: padding-box;
+}
+
+/* ---------- Columna de lectura ---------- */
+.reading {
+  max-width: 74ch;
+}
+
+/* Los headings no quedan pegados al borde superior al hacer scroll desde el Outline */
+.prose-note :is(h1, h2, h3, h4, h5, h6) {
+  scroll-margin-top: 20px;
+}
+
+/* ---------- Render de notas (markdown) ---------- */
+.prose-note {
+  color: var(--fg-muted);
+  font-size: 15px;
+  line-height: 1.65;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+.prose-note > *:first-child {
+  margin-top: 0;
+}
+.prose-note h1,
+.prose-note h2,
+.prose-note h3,
+.prose-note h4 {
+  color: var(--fg);
+  /* Zoey-style: títulos/headings en JetBrains Mono; el cuerpo sigue en Inter */
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-weight: 590;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  margin: 1.6em 0 0.6em;
+}
+.prose-note h1 {
+  font-size: 1.7em;
+}
+.prose-note h2 {
+  font-size: 1.35em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.prose-note h3 {
+  font-size: 1.15em;
+}
+.prose-note h4 {
+  font-size: 1em;
+}
+.prose-note p {
+  margin: 0.8em 0;
+}
+.prose-note a {
+  color: var(--accent-hover);
+  text-decoration: none;
+}
+.prose-note a:hover {
+  text-decoration: underline;
+}
+.prose-note ul,
+.prose-note ol {
+  margin: 0.7em 0;
+  padding-left: 1.5em;
+}
+.prose-note li {
+  margin: 0.25em 0;
+}
+.prose-note ul {
+  list-style: disc;
+}
+.prose-note ol {
+  list-style: decimal;
+}
+.prose-note blockquote {
+  margin: 1em 0;
+  padding: 0.2em 1em;
+  border-left: 3px solid var(--accent-bg);
+  color: var(--fg-subtle);
+}
+.prose-note code {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.86em;
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 5px;
+  padding: 0.12em 0.4em;
+}
+.prose-note pre {
+  margin: 1em 0;
+  padding: 1em 1.1em;
+  background: var(--panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  overflow-x: auto;
+  line-height: 1.5;
+}
+.prose-note pre code {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-size: 0.82em;
+  color: var(--fg-muted);
+}
+.prose-note hr {
+  border: none;
+  border-top: 1px solid var(--border-subtle);
+  margin: 1.8em 0;
+}
+.prose-note table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+  font-size: 0.92em;
+}
+.prose-note th,
+.prose-note td {
+  border: 1px solid var(--border-subtle);
+  padding: 0.45em 0.7em;
+  text-align: left;
+}
+.prose-note th {
+  background: var(--surface);
+  color: var(--fg);
+  font-weight: 590;
+}
+.prose-note img {
+  max-width: 100%;
+  border-radius: 8px;
+}
+.prose-note strong {
+  color: var(--fg);
+  font-weight: 590;
+}
+
+/* ---------- Wikilinks ---------- */
+.wikilink {
+  color: var(--accent-hover);
+  text-decoration: none;
+  border-bottom: 1px dashed rgba(168, 85, 247, 0.4);
+  cursor: pointer;
+}
+.wikilink:hover {
+  border-bottom-style: solid;
+}
+.wikilink-broken {
+  color: var(--fg-subtle);
+  border-bottom: 1px dashed var(--border-strong);
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   TRATAMIENTO GLOBAL ZOEY — tipografía chrome (JetBrains Mono) + glow violeta
+   Se aplica a TODAS las vistas por selector, sin tocar la densidad de las
+   vistas de trabajo (Miller / editor / Kanban). Inter permanece en el cuerpo.
+   ========================================================================== */
+
+/* Wordmark: SINAPSIS / marca, en mono con tracking */
+.wordmark {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+/* Login hero wordmark: SINAPSIS en neón violeta (referencia Zoey OS). */
+.login-wordmark {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-weight: 700;
+  font-size: clamp(2rem, 6.5vw, 4rem);
+  letter-spacing: 0.1em;
+  color: #c084fc;
+  display: inline-flex;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  justify-content: center;
+  text-shadow:
+    0 0 20px rgba(168, 85, 247, 0.6),
+    0 0 40px rgba(168, 85, 247, 0.35),
+    0 0 70px rgba(168, 85, 247, 0.2);
+}
+
+/* Labels/metadata de UI (columnas Kanban, secciones Home, etc. usan
+   `uppercase tracking-wider`): pasan a JetBrains Mono automáticamente. */
+.uppercase.tracking-wider,
+.chrome-label {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+.chrome-label {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* Glow de estado: solo en elementos con acento (activo / selección / CTA).
+   Iconos lucide = SVG (currentColor) → drop-shadow; barras sólidas → box-shadow. */
+.text-accent {
+  filter: drop-shadow(0 0 5px rgba(168, 85, 247, 0.45));
+}
+.bg-accent {
+  box-shadow: 0 0 8px rgba(168, 85, 247, 0.5);
+}
+.bg-accent-bg {
+  box-shadow: 0 0 16px rgba(168, 85, 247, 0.22);
+}
+
+/* Glow de foco (inputs/textarea): ring morado, no azul genérico. */
+input:focus-visible,
+textarea:focus-visible {
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.15);
+}
+
+/* ---------- LOGIN — form premium (glassy input + botón morado) ---------- */
+.login-input {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  transition:
+    border-color 180ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 180ms cubic-bezier(0.16, 1, 0.3, 1),
+    background 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.login-input:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+}
+.login-input:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(168, 85, 247, 0.6);
+  box-shadow:
+    0 0 0 3px rgba(168, 85, 247, 0.15),
+    var(--glow-sm);
+}
+.login-label {
+  display: block;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--fg-subtle);
+}
+.login-btn {
+  border-radius: 10px;
+  background: linear-gradient(180deg, var(--accent) 0%, var(--accent-strong) 100%);
+  color: #ffffff;
+  font-weight: 590;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.12) inset,
+    0 6px 18px -6px rgba(168, 85, 247, 0.5);
+  transition:
+    box-shadow 180ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 180ms cubic-bezier(0.16, 1, 0.3, 1),
+    filter 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.login-btn:hover:not(:disabled) {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.18) inset,
+    0 0 0 1px rgba(168, 85, 247, 0.5),
+    0 8px 26px -6px rgba(168, 85, 247, 0.7);
+}
+.login-btn:active:not(:disabled) {
+  transform: translateY(0);
+  filter: brightness(0.98);
+}
+.login-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---------- Menús (Radix dropdown/context) ---------- */
+@keyframes menuIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.menu-content[data-state='open'] {
+  animation: menuIn 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: var(--radix-dropdown-menu-content-transform-origin, var(--radix-context-menu-content-transform-origin, top));
+}
+
+/* ---------- Command Palette (Raycast-style, única con sombra física) ---------- */
+.palette-surface {
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  box-shadow:
+    rgba(0, 0, 0, 0.5) 0px 0px 0px 2px,
+    rgba(255, 255, 255, 0.1) 0px 0px 14px,
+    rgba(0, 0, 0, 0.5) 0px 16px 40px -8px;
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .palette-surface { background: var(--surface); }
+}
+html.light .palette-surface {
+  box-shadow:
+    rgba(0, 0, 0, 0.12) 0px 0px 0px 1px,
+    rgba(0, 0, 0, 0.18) 0px 16px 40px -8px;
+}
+
+/* Key-cap de atajo (gradiente, borde de luz) */
+.keycap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--fg-subtle);
+  background: linear-gradient(180deg, #1b1b1c, #121213);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.4);
+}
+html.light .keycap {
+  color: var(--fg-subtle);
+  background: linear-gradient(180deg, #ffffff, #efeeec);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.06);
+}
+
+/* Menús flotantes con leve profundidad */
+.float-shadow {
+  box-shadow:
+    rgba(0, 0, 0, 0.4) 0px 2px 8px,
+    rgba(255, 255, 255, 0.06) 0px 0px 0px 0.5px inset;
+}
+
+/* ==========================================================================
+   LOGIN — fondo grilla 3D estilo Zoey (CSS plane + canvas 2D de pulsos)
+   ========================================================================== */
+.login-grid {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--bg);
+  z-index: 0;
+}
+.login-grid-plane {
+  position: absolute;
+  left: 50%;
+  top: 58%;
+  width: 320%;
+  height: 320%;
+  transform-origin: center;
+  transform: translate(-50%, -50%) perspective(600px) rotateX(55deg);
+  background-image:
+    linear-gradient(rgba(168, 85, 247, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(168, 85, 247, 0.06) 1px, transparent 1px),
+    linear-gradient(rgba(168, 85, 247, 0.03) 2px, transparent 2px),
+    linear-gradient(90deg, rgba(168, 85, 247, 0.03) 2px, transparent 2px);
+  background-size: 120px 120px, 120px 120px, 120px 120px, 120px 120px;
+  -webkit-mask-image: radial-gradient(ellipse 60% 55% at 50% 38%, #000 28%, transparent 75%);
+  mask-image: radial-gradient(ellipse 60% 55% at 50% 38%, #000 28%, transparent 75%);
+  animation: gridApproach 1.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.login-grid-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.login-grid-glow {
+  position: absolute;
+  width: 350px;
+  height: 350px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.18), transparent 70%);
+  filter: blur(20px);
+}
+.login-grid-glow-tl {
+  top: -130px;
+  left: -130px;
+}
+.login-grid-glow-br {
+  bottom: -130px;
+  right: -130px;
+}
+.login-grid-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 40%, transparent 38%, rgba(8, 9, 10, 0.88) 100%);
+}
+@keyframes gridApproach {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) perspective(600px) rotateX(72deg) scale(1.2);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) perspective(600px) rotateX(55deg) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+  .login-grid-plane {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* ==========================================================================
+   LOGIN — grafo de nodos + aristas (canvas) sobre el plano 3D
+   marcador: SINAPSIS_LOGIN_GRAPH
+   ========================================================================== */
+.login-graph {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 1;
+  pointer-events: none;
+}
+.login-graph-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.login-graph-plane {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 100%;
+  transform: perspective(600px) rotateX(55deg);
+  transform-style: preserve-3d;
+  -webkit-mask-image: radial-gradient(ellipse 60% 55% at 50% 45%, #000 40%, transparent 85%);
+  mask-image: radial-gradient(ellipse 60% 55% at 50% 45%, #000 40%, transparent 85%);
+  animation: graphFade 1.6s ease both;
+}
+.login-node {
+  position: absolute;
+  left: var(--gx);
+  top: var(--gy);
+  transform: translate(-50%, -50%) rotateX(-55deg);
+  transform-style: preserve-3d;
+}
+.login-node-dot {
+  display: block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(168, 85, 247, 0.95);
+  box-shadow:
+    0 0 6px 2px rgba(168, 85, 247, 0.7),
+    0 0 14px 5px rgba(168, 85, 247, 0.35);
+  animation: nodePulse 2.5s ease-in-out infinite;
+  animation-delay: var(--d);
+}
+@keyframes nodePulse {
+  0%,
+  100% {
+    transform: scale(0.8);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scale(1.18);
+    opacity: 1;
+  }
+}
+@keyframes graphFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .login-graph-plane {
+    animation: none;
+    opacity: 1;
+  }
+  .login-node-dot {
+    animation: none;
+    transform: scale(1);
+    opacity: 0.9;
+  }
+}
+
+/* ==========================================================================
+   RESPONSIVE MÓVIL (Frente B) — safe-area iPhone 14 + viewport dinámico
+   marcador: SINAPSIS_RESPONSIVE_MOBILE_V1
+   - viewport-fit=cover ya declarado en index.html; acá se usa 100dvh para que
+     el shell ocupe el alto real del viewport móvil (barra de Safari dinámica).
+   - overflow-x hidden en body: red de seguridad contra scroll horizontal
+     provocado por los drawers off-canvas (translate-x fuera de pantalla). Los
+     contenedores con scroll horizontal propio (Kanban, Miller) NO se ven
+     afectados: tienen su propio overflow-x:auto.
+   ========================================================================== */
+body {
+  overflow-x: hidden;
+}
+@supports (min-height: 100dvh) {
+  html,
+  body,
+  #root {
+    min-height: 100dvh;
+  }
+}
+
+/* ==========================================================================
+   TEMA CLARO — chrome global (Fase D, Lurtz)
+   marcador: SINAPSIS_LIGHT_CHROME_V1
+   Los overlays sutiles del cuerpo (bg rgba(255,255,255,.02)) leen como cards
+   blancas elevadas sobre --bg #fbfbfa (Notion-style) → OK. Acá se corrige el
+   chrome que en dark usa blanco translúcido y en claro quedaría invisible:
+   scrollbar y float-shadow. Scoped a html.light: dark queda intacto.
+   ========================================================================== */
+html.light ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.14);
+  background-clip: padding-box;
+}
+html.light ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.24);
+  background-clip: padding-box;
+}
+html.light .float-shadow {
+  box-shadow:
+    rgba(0, 0, 0, 0.12) 0px 2px 8px,
+    rgba(0, 0, 0, 0.06) 0px 0px 0px 0.5px inset;
+}
+html.light input:focus-visible,
+html.light textarea:focus-visible {
+  box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.18);
+}
+
+
+/* ==========================================================================
+   GLASS SURFACES — fondo ambient (particulas) visible a traves del contenido
+   marcador: SINAPSIS_GLASS_V1
+   .glass         chrome/paneles (TopBar, Sidebar, RightPanel, tabs, menus,
+                   overlays de contexto): alpha media, blur medio.
+   .glass-strong  superficies con texto denso (main de lectura, tablas,
+                   dialogos/formularios): alpha mas alta para mantener
+                   contraste AA sobre el campo de particulas.
+   .glass-hover   estado hover opcional de una fila/superficie glass (no
+                   reemplaza los estados hover de botones, que siguen con
+                   bg-surface-hover solido).
+   Fallback sin backdrop-filter (navegadores viejos): opaco (var(--panel)),
+   nunca transparente sin blur (evita texto illegible).
+   ========================================================================== */
+.glass {
+  background: color-mix(in srgb, var(--panel) 62%, transparent);
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+}
+.glass-strong {
+  background: color-mix(in srgb, var(--panel) 84%, transparent);
+  backdrop-filter: blur(18px) saturate(1.25);
+  -webkit-backdrop-filter: blur(18px) saturate(1.25);
+}
+.glass-hover:hover {
+  background: color-mix(in srgb, var(--surface-hover) 82%, transparent);
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .glass,
+  .glass-strong {
+    background: var(--panel);
+  }
+}
+/* Movil: menos blur (mas barato para el compositor / GPUs moviles). */
+@media (max-width: 767px) {
+  .glass {
+    backdrop-filter: blur(8px) saturate(1.1);
+    -webkit-backdrop-filter: blur(8px) saturate(1.1);
+  }
+  .glass-strong {
+    backdrop-filter: blur(10px) saturate(1.15);
+    -webkit-backdrop-filter: blur(10px) saturate(1.15);
+  }
+}
+
+/* ---------- Telemetria de particulas (login), estilo QA discreto ---------- */
+.particles-stats {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--fg-subtle);
+  white-space: pre;
+  opacity: 0.75;
+  user-select: none;
+}
+@media (max-width: 480px) {
+  .particles-stats {
+    font-size: 9px;
+  }
+}

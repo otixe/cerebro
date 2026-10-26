@@ -123,6 +123,35 @@ services:
       gateway: { condition: service_healthy }
     restart: unless-stopped
 
+  # Sinapsis: the web panel (notes, tasks, correspondence). A SAME-HOST companion:
+  # it reads and writes the Cerebro Postgres directly and shares the vault folder.
+  sinapsis:
+    build:
+      context: ./src/sinapsis
+      additional_contexts:
+        common: ./src/common
+    env_file: .env
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT_INTERNAL: "5432"
+      GATEWAY_URL: http://gateway:8000
+      VAULT_ROOT: /vault/obsidian-vault
+      SINAPSIS_API_KEY_FILE: /run/secrets/sinapsis_api_key
+      APPROVAL_API_ENABLED: "false"
+      SINAPSIS_ALLOWED_ORIGINS: ${SINAPSIS_ALLOWED_ORIGINS:-http://127.0.0.1:8080}
+    volumes:
+      - ${VAULT_DIR:-./examples/vault}:/vault/obsidian-vault
+      - ./.secrets/sinapsis_api_key:/run/secrets/sinapsis_api_key:ro
+    ports:
+      - "${SINAPSIS_PUBLISH:-127.0.0.1:8080}:8090"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8090/').read()"]
+      interval: 5s
+      retries: 30
+    depends_on:
+      gateway: { condition: service_healthy }
+    restart: unless-stopped
+
 volumes:
   pg-data:
   qdrant-data:

@@ -1,0 +1,9 @@
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+psycopg[binary]==3.2.3
+httpx==0.28.1
+python-multipart==0.0.20
+bcrypt==4.2.1
+# slowapi: rate-limit anti brute-force en /login y /change-password (auditoria H2).
+# Misma version que el gateway para no divergir.
+slowapi==0.1.9

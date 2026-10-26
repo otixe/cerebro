@@ -818,3 +818,30 @@ ALTER TABLE ONLY public.task_deps
 
 ALTER TABLE ONLY public.tasks
     ADD CONSTRAINT tasks_approval_replaces_fk FOREIGN KEY (replaces_request_id) REFERENCES public.tasks(id) ON DELETE RESTRICT;
+
+-- Seed mínimo del core (fresh install): tasks_derive_organization() asigna 'interno'
+-- a proyectos nuevos; sin esta fila, una instalación de cero da FK projects_org_id_fkey.
+INSERT INTO public.organizations (id, name) VALUES ('interno', 'Internal') ON CONFLICT (id) DO NOTHING;
+
+-- Sinapsis (login humano)
+-- Sessions of the Sinapsis web panel. Schema-only, taken from the live schema
+-- (catalog read of public.sessions); token hashes only, never plaintext tokens.
+
+CREATE TABLE public.sessions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    principal_id integer NOT NULL,
+    token_hash text NOT NULL,
+    method text DEFAULT 'password'::text,
+    created_at timestamp with time zone DEFAULT now(),
+    expires_at timestamp with time zone NOT NULL,
+    revoked_at timestamp with time zone,
+    CONSTRAINT sessions_method_check CHECK ((method = ANY (ARRAY['password'::text, 'passkey'::text])))
+);
+
+ALTER TABLE ONLY public.sessions
+    ADD CONSTRAINT sessions_pkey PRIMARY KEY (id);
+
+CREATE INDEX sessions_token_hash_idx ON public.sessions USING btree (token_hash) WHERE (revoked_at IS NULL);
+
+ALTER TABLE ONLY public.sessions
+    ADD CONSTRAINT sessions_principal_id_fkey FOREIGN KEY (principal_id) REFERENCES public.agents(id);

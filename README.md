@@ -2,6 +2,8 @@
 
 **Your AI agents forget everything between sessions and can't coordinate. Cerebro gives them shared persistent memory, a task board, a mailbox and shared skills — over MCP and REST, with local embeddings.**
 
+It includes **Sinapsis**, a web panel for the humans on the team.
+
 Self-hosted · MIT · works with Claude Code, Codex, Cursor, pi and any MCP client · no embedding API costs by default · [Español](README.es.md)
 
 ## Sound familiar?
@@ -29,10 +31,12 @@ Self-hosted · MIT · works with Claude Code, Codex, Cursor, pi and any MCP clie
 ```bash
 git clone https://github.com/otixe/cerebro && cd cerebro
 ./setup.sh                    # creates .env with random secrets and your admin key
-docker compose up -d --wait   # Postgres, Qdrant, Ollama (EmbeddingGemma) and Cerebro
+docker compose up -d --wait   # Postgres, Qdrant, Ollama (EmbeddingGemma), Cerebro and the Sinapsis panel
 ```
 
-Health check: `curl http://127.0.0.1:8765/health`. End-to-end check (write → semantic search, in a throwaway stack): `tests/smoke.sh --down`.
+Then open the **Sinapsis** panel at http://127.0.0.1:8080 (user `owner`; the first password is in `.env` as `SINAPSIS_ADMIN_PASSWORD`, and you will be asked to change it).
+
+Health check: `curl http://127.0.0.1:8765/health`. End-to-end check in a throwaway stack (memory write → semantic search, then panel home, login and a new note): `tests/smoke.sh --down`.
 
 Requirements: Docker with Compose v2, about 4 GB of free RAM and about 3 GB of disk. Everything binds to localhost; put a TLS reverse proxy in front before exposing it.
 
@@ -72,12 +76,29 @@ curl -s http://127.0.0.1:8765/memory/search -H "X-Merlin-Key: $CEREBRO_KEY" -H '
   -d '{"query":"when do we ship?","top_k":5}'
 ```
 
+## Sinapsis: the web panel
+
+Cerebro ships with **Sinapsis**, a web panel for the humans who work with the agents: browse and edit the vault notes, follow the task board, read and answer agent correspondence, and search memory.
+
+| Home | Task board | Note |
+|---|---|---|
+| ![Sinapsis home](docs/screenshots/sinapsis-home.png) | ![Sinapsis task board](docs/screenshots/sinapsis-board.png) | ![Sinapsis note](docs/screenshots/sinapsis-note.png) |
+
+*Screenshots with the sample data in `examples/vault`.*
+
+Honest limits:
+- **Same-host companion, not a remote client.** Sinapsis reads and writes the Cerebro Postgres directly and shares the vault folder, so it runs next to the gateway, on the same Docker network. Point it at another Cerebro only on the same host.
+- **The UI is in Spanish** for now. Translations are welcome.
+- **Approvals are off** in this version (`APPROVAL_API_ENABLED=false`).
+- The weather widget is opt-in (`VITE_WEATHER_LAT` / `VITE_WEATHER_LON` at build time). By default the panel makes no third-party calls.
+
 ## Architecture
 
 ```
  Claude Code · Codex · Cursor · pi ──MCP──► mcp / mcp-sse ─┐
  scripts · services ────────────────REST───────────────────►│ gateway (FastAPI) ──► Postgres  source of truth: memory, agents, tasks, mail, audit
-                                                            │                   ├─► Qdrant    vectors (rebuildable from Postgres)
+ humans (browser) ──► Sinapsis panel ──REST (on behalf of)─►│                   ├─► Qdrant    vectors (rebuildable from Postgres)
+                          └──── same Postgres + vault ──────┼──────────────────────────────┘
  vault/*.md ◄──── indexer (watch → chunk → embed) ──────────┘                   └─► Ollama    EmbeddingGemma, local
 ```
 

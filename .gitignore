@@ -3,3 +3,6 @@
 *.bak*
 __pycache__/
 CONTRACT-src.md
+.secrets/
+*.pre-pick-*
+*.pre-*
